@@ -488,7 +488,11 @@ Dictionary::Ptr ApiActions::RemoveDowntime(const ConfigObject::Ptr& object,
 				downtime->SetRemovedBy(author);
 			}
 
-			Downtime::RemoveDowntime(downtime->GetName(), true);
+			try {
+				Downtime::RemoveDowntime(downtime->GetName(), true);
+			} catch (std::runtime_error& error) {
+				return ApiActions::CreateResult(400, error.what());
+			}
 		}
 
 		return ApiActions::CreateResult(200, "Successfully removed all downtimes for object '" + checkable->GetName() + "'.");
@@ -504,11 +508,13 @@ Dictionary::Ptr ApiActions::RemoveDowntime(const ConfigObject::Ptr& object,
 		downtime->SetRemovedBy(author);
 	}
 
-	String downtimeName = downtime->GetName();
+	try {
+		Downtime::RemoveDowntime(downtime->GetName(), true);
 
-	Downtime::RemoveDowntime(downtimeName, true);
-
-	return ApiActions::CreateResult(200, "Successfully removed downtime '" + downtimeName + "'.");
+		return ApiActions::CreateResult(200, "Successfully removed downtime '" + downtime->GetName() + "'.");
+	} catch (std::runtime_error& error) {
+		return ApiActions::CreateResult(400, error.what());
+	}
 }
 
 Dictionary::Ptr ApiActions::ShutdownProcess(const ConfigObject::Ptr& object,

@@ -317,9 +317,14 @@ void Downtime::RemoveDowntime(const String& id, bool cancelled, bool expired, co
 	String config_owner = downtime->GetConfigOwner();
 
 	if (!config_owner.IsEmpty() && !expired) {
-		Log(LogWarning, "Downtime")
-			<< "Cannot remove downtime '" << downtime->GetName() << "'. It is owned by scheduled downtime object '" << config_owner << "'";
-		return;
+		{
+			String errorMessage = "Cannot remove downtime '" + downtime->GetName() +
+					"'. It is owned by scheduled downtime object '" + config_owner + "'";
+
+			Log(LogWarning, "Downtime") << errorMessage;
+
+			throw std::runtime_error(errorMessage);
+		}
 	}
 
 	downtime->SetWasCancelled(cancelled);

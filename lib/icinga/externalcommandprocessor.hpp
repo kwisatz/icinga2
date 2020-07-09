@@ -161,7 +161,7 @@ private:
 
 	static boost::mutex& GetMutex();
 	static std::map<String, ExternalCommandInfo>& GetCommands();
-
+	static bool m_DownTimeRemoved;
 };
 
 }

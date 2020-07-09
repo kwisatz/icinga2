@@ -24,6 +24,7 @@
 
 using namespace icinga;
 
+bool ExternalCommandProcessor::m_DownTimeRemoved;
 boost::signals2::signal<void(double, const String&, const std::vector<String>&)> ExternalCommandProcessor::OnNewExternalCommand;
 
 void ExternalCommandProcessor::Execute(const String& line)
@@ -970,10 +971,19 @@ void ExternalCommandProcessor::ScheduleSvcDowntime(double, const std::vector<Str
 void ExternalCommandProcessor::DelSvcDowntime(double, const std::vector<String>& arguments)
 {
 	int id = Convert::ToLong(arguments[0]);
-	Log(LogNotice, "ExternalCommandProcessor")
-		<< "Removing downtime ID " << arguments[0];
+	m_DownTimeRemoved = false;
 	String rid = Downtime::GetDowntimeIDFromLegacyID(id);
-	Downtime::RemoveDowntime(rid, true);
+
+	try {
+		Downtime::RemoveDowntime(rid, true);
+	} catch (std::runtime_error& error) {
+		m_DownTimeRemoved = true;
+		Log(LogWarning, error.what());
+	}
+
+	if (!m_DownTimeRemoved)
+		Log(LogNotice, "ExternalCommandProcessor")
+				<< "Removing downtime ID " << arguments[0];
 }
 
 void ExternalCommandProcessor::ScheduleHostDowntime(double, const std::vector<String>& arguments)
@@ -1072,10 +1082,19 @@ void ExternalCommandProcessor::ScheduleAndPropagateTriggeredHostDowntime(double,
 void ExternalCommandProcessor::DelHostDowntime(double, const std::vector<String>& arguments)
 {
 	int id = Convert::ToLong(arguments[0]);
-	Log(LogNotice, "ExternalCommandProcessor")
-		<< "Removing downtime ID " << arguments[0];
 	String rid = Downtime::GetDowntimeIDFromLegacyID(id);
-	Downtime::RemoveDowntime(rid, true);
+	m_DownTimeRemoved = false;
+
+	try {
+		Downtime::RemoveDowntime(rid, true);
+	} catch (std::runtime_error& error) {
+		m_DownTimeRemoved = true;
+		Log(LogWarning, error.what());
+	}
+
+	if (!m_DownTimeRemoved)
+		Log(LogNotice, "ExternalCommandProcessor")
+				<< "Removing downtime ID " << arguments[0];
 }
 
 void ExternalCommandProcessor::DelDowntimeByHostName(double, const std::vector<String>& arguments)
@@ -1101,13 +1120,24 @@ void ExternalCommandProcessor::DelDowntimeByHostName(double, const std::vector<S
 		Log(LogWarning, "ExternalCommandProcessor")
 			<< ("Ignoring additional parameters for host '" + arguments[0] + "' downtime deletion.");
 
+	m_DownTimeRemoved = false;
+	String downTimeName;
 	for (const Downtime::Ptr& downtime : host->GetDowntimes()) {
-		Log(LogNotice, "ExternalCommandProcessor")
-			<< "Removing downtime '" << downtime->GetName() << "'.";
+		downTimeName = downtime->GetName();
 
-		Downtime::RemoveDowntime(downtime->GetName(), true);
+		try {
+			Downtime::RemoveDowntime(downtime->GetName(), true);
+		} catch (std::runtime_error& error) {
+			m_DownTimeRemoved = true;
+			Log(LogWarning, error.what());
+		}
+
+		if (!m_DownTimeRemoved)
+			Log(LogNotice, "ExternalCommandProcessor")
+					<< "Removing downtime '" << downTimeName << "'.";
 	}
 
+	m_DownTimeRemoved = false;
 	for (const Service::Ptr& service : host->GetServices()) {
 		if (!serviceName.IsEmpty() && serviceName != service->GetName())
 			continue;
@@ -1119,10 +1149,19 @@ void ExternalCommandProcessor::DelDowntimeByHostName(double, const std::vector<S
 			if (!commentString.IsEmpty() && downtime->GetComment() != commentString)
 				continue;
 
-			Log(LogNotice, "ExternalCommandProcessor")
-				<< "Removing downtime '" << downtime->GetName() << "'.";
+			downTimeName = downtime->GetName();
 
-			Downtime::RemoveDowntime(downtime->GetName(), true);
+			try {
+				Downtime::RemoveDowntime(downtime->GetName(), true);
+			} catch (std::runtime_error& error) {
+				m_DownTimeRemoved = true;
+				Log(LogWarning, error.what());
+			}
+
+			if (!m_DownTimeRemoved) {
+				Log(LogNotice, "ExternalCommandProcessor")
+						<< "Removing downtime '" << downtime->GetName() << "'.";
+			}
 		}
 	}
 }
