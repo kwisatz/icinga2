@@ -45,6 +45,8 @@ PerfdataValue::Ptr PerfdataValue::Parse(const String& perfdata)
 
 	String valueStr = perfdata.SubStr(eqp + 1, spq - eqp - 1);
 
+	valueStr = valueStr.ToLower();
+
 	size_t pos = valueStr.FindFirstNotOf("+-0123456789.e");
 
 	double value = Convert::ToDouble(valueStr.SubStr(0, pos));
