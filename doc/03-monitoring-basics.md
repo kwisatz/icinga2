@@ -1633,7 +1633,7 @@ apply Notification "mail-host-notification" to Host {
   [...]
 
   /* Log which host does not specify required user/user_groups attributes. This will fail immediately during config validation and help a lot. */
-  if (len(host.vars.notification.mail.users) == 0 && len(host.vars.notification.mail.user_groups) == 0) {
+  if (len(host.vars.notification.mail.users) == 0 && len(host.vars.notification.mail.groups) == 0) {
     log(LogCritical, "config", "Host '" + host.name + "' does not specify required user/user_groups configuration attributes for notification '" + name + "'.")
   }
 
@@ -1647,7 +1647,7 @@ apply Notification "sms-host-notification" to Host {
   [...]
 
   /* Log which host does not specify required user/user_groups attributes. This will fail immediately during config validation and help a lot. */
-  if (len(host.vars.notification.sms.users) == 0 && len(host.vars.notification.sms.user_groups) == 0) {
+  if (len(host.vars.notification.sms.users) == 0 && len(host.vars.notification.sms.groups) == 0) {
     log(LogCritical, "config", "Host '" + host.name + "' does not specify required user/user_groups configuration attributes for notification '" + name + "'.")
   }
 
